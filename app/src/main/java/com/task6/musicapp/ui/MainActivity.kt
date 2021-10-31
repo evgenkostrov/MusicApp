@@ -34,7 +34,10 @@ import com.task6.musicapp.viewmodel.MediaViewModel
 import com.github.zawadz88.materialpopupmenu.popupMenu
 import com.task6.musicapp.R
 import com.task6.musicapp.databinding.ActivityMainBinding
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.Serializable
+import java.lang.StringBuilder
 import java.util.*
 
 class MainActivity : AppCompatActivity(), OnFolderListener,Serializable {
@@ -43,6 +46,7 @@ class MainActivity : AppCompatActivity(), OnFolderListener,Serializable {
     private lateinit var adapter: FolderAdapter
     private val STORAGE_PERMISSION_CODE = 1
     private lateinit var viewModel: MediaViewModel
+    var count = 0
 
     @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("Recycle")
@@ -111,18 +115,38 @@ class MainActivity : AppCompatActivity(), OnFolderListener,Serializable {
         }
         binding.downloadButton.setOnClickListener {
 
-            startDownload()
+            val res=resources
+            val inputStream = res.openRawResource(R.raw.playlist)
+            val scanner=Scanner(inputStream)
+            val builder=StringBuilder()
+            while (scanner.hasNextLine()){
+                builder.append(scanner.nextLine())
+            }
+            val rootJsonObject=JSONArray(builder.toString())
+            val songs = mutableListOf<String>()
+            for (i in 0 until rootJsonObject.length()) {
+                val mp3JsonObject = rootJsonObject.getJSONObject(i)
+                val trackUri = mp3JsonObject.getString("trackUri")
+                songs.add(trackUri)
+            }
 
+
+            val trackUriForDownload = songs[count]
+            startDownload(trackUriForDownload)
+            if(count<4){
+                count++
+            }else{
+                count=0
+            }
         }
     }
 
-    private fun startDownload() {
-        val url = "https://freepd.com/music/Ice and Snow.mp3"
-        val request = DownloadManager.Request(Uri.parse(url))
+    private fun startDownload(uri: String) {
+        val request = DownloadManager.Request(Uri.parse(uri))
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
         request.setDescription("Downloading")
         request.setMimeType("audio/MP3")
-        request.setTitle("File :")
+        request.setTitle("File:$uri")
         request.allowScanningByMediaScanner()
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "audio.mp3")
