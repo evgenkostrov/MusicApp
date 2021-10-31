@@ -3,14 +3,18 @@ package com.task6.musicapp.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.app.DownloadManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
+
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.*
@@ -107,7 +111,25 @@ class MainActivity : AppCompatActivity(), OnFolderListener,Serializable {
         }
         binding.downloadButton.setOnClickListener {
 
+            startDownload()
+
         }
+    }
+
+    private fun startDownload() {
+        val url = "https://freepd.com/music/Ice and Snow.mp3"
+        val request = DownloadManager.Request(Uri.parse(url))
+        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+        request.setDescription("Downloading")
+        request.setMimeType("audio/MP3")
+        request.setTitle("File :")
+        request.allowScanningByMediaScanner()
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "audio.mp3")
+
+        val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        manager.enqueue(request)
+
     }
 
     private fun insertMusicsToDatabase(musics: List<RoomAudioModel>){
